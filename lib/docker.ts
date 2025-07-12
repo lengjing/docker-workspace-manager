@@ -17,10 +17,11 @@ export async function createDockerContainer({
   volumeMountPath: string;
   sshPort: number;
 }): Promise<string> {
+
   const container = await docker.createContainer({
     Image: image,
     name: `workspace_${name}_${Date.now()}`,
-    Cmd: ["/bin/bash", "-c", "tail -f /dev/null"],
+    // Cmd: ["/bin/bash", "-c", "tail -f /dev/null"],
     HostConfig: {
       Binds: [`${volumeMountPath}:/data`],
       PortBindings: {

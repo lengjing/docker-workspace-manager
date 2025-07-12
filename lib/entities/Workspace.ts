@@ -8,27 +8,27 @@ export class Workspace {
   @Column()
   name: string;
 
-  @Column()
-  cpu: string;
+  // @Column()
+  // cpu: string;
 
-  @Column()
-  gpu: string;
+  // @Column()
+  // gpu: string;
 
-  @Column()
-  memory: string;
+  // @Column()
+  // memory: string;
 
-  @Column()
-  storage: string;
+  // @Column()
+  // storage: string;
 
-  @Column()
-  volumeMountPath: string;
+  // @Column()
+  // volumeMountPath: string;
 
-  @Column()
-  sshPort: number;
+  // @Column()
+  // sshPort: number;
 
-  @Column()
-  dockerContainerId: string;
+  // @Column()
+  // dockerContainerId: string;
 
-  @Column()
-  status: string;
+  // @Column()
+  // status: string;
 }

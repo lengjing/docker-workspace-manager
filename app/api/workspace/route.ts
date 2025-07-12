@@ -12,6 +12,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  await initializeDataSource();
+  
   const body = await req.json();
 
   const repo = AppDataSource.getRepository(Workspace);
@@ -22,7 +24,7 @@ export async function POST(req: NextRequest) {
   // 调用 Docker 创建
   const containerId = await createDockerContainer({
     name: body.name,
-    image: "ubuntu:latest",
+    image: "busybox:latest",
     volumeMountPath: body.volumeMountPath,
     sshPort
   });
