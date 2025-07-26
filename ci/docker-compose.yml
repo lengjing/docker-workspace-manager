@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  ssh-sidecar:
+    build: ./sidecar
+    container_name: ssh-sidecar
+    network_mode: host
+    privileged: true
+    pid: "host"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Asia/Shanghai

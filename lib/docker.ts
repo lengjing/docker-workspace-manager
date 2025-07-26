@@ -6,7 +6,7 @@ export async function getRandomPort(): Promise<number> {
   return Math.floor(22000 + Math.random() * 1000);
 }
 
-export async function createDockerContainer({
+export const createContainer = async ({
   name,
   image,
   volumeMountPath,
@@ -16,7 +16,7 @@ export async function createDockerContainer({
   image: string;
   volumeMountPath: string;
   sshPort: number;
-}): Promise<string> {
+}): Promise<string> => {
 
   const container = await docker.createContainer({
     Image: image,
@@ -41,3 +41,5 @@ export async function createDockerContainer({
   await container.start();
   return container.id;
 }
+
+export const listContainers = docker.listContainers

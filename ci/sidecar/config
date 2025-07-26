@@ -1,0 +1,13 @@
+PermitRootLogin yes
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+UsePAM yes
+X11Forwarding yes
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+Port 22001
+Port 22002
+Port 22003
+Port 22004
