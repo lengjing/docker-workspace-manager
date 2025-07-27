@@ -74,6 +74,7 @@ export default function WorkspacePage() {
               <TableHead>卷路径</TableHead>
               <TableHead>SSH端口</TableHead>
               <TableHead>状态</TableHead>
+              <TableHead>操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,6 +87,7 @@ export default function WorkspacePage() {
                 <TableCell>{ws.volumeMountPath}</TableCell>
                 <TableCell>{ws.sshPort}</TableCell>
                 <TableCell>{ws.status}</TableCell>
+                <TableCell>{}</TableCell>
               </TableRow>
             ))}
           </TableBody>

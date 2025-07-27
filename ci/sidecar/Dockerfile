@@ -4,29 +4,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y ca-certificates && \
     sed -i 's|http://.*archive.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list && \
-    sed -i 's|http://.*security.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list && \
-    apt-get update && apt-get install -y \
-    openssh-server \
-    iproute2 \
-    procps \
-    util-linux \
-    docker.io \
-    python3-pip && \
-    mkdir -p /var/run/sshd
-
-RUN mkdir -p /etc/pip && \
-    echo "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple" > /etc/pip.conf
-
-RUN pip3 install notebook jupyterlab
-
-COPY enter.sh /opt/enter.sh
-COPY config /etc/ssh/sshd_config
-COPY entrypoint.sh /opt/entrypoint.sh
-
-RUN chmod +x /opt/*.sh
+    sed -i 's|http://.*security.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+    
+RUN apt-get update && apt-get install -y \
+    curl openssh-server libstdc++6 libgcc-s1 \
+    && apt-get clean
 
 RUN echo 'root:root' | chpasswd
 
-EXPOSE 22001-22100
+RUN curl -L https://github.com/coder/code-server/releases/download/v4.102.2/code-server-4.102.2-linux-amd64.tar.gz -o code-server.tar.gz && \
+    tar -xvzf code-server.tar.gz && \
+    rm code-server.tar.gz
+    
+RUN ln -sf /code-server-4.102.2-linux-amd64/bin/code-server /usr/bin/code-server
 
-CMD ["/opt/entrypoint.sh"]
+COPY sshd_config /etc/ssh/sshd_config
+COPY start.sh .
+
+RUN chmod +x *.sh
+
+CMD [ "./start.sh" ]

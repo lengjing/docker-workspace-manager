@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --watch src/** --ext ts,json --ignore src/**/*.spec.ts --exec ts-node src/index.ts",
+    "start": "ts-node src/index.ts",
+    "build": "rm -rf dist && tsc && cp package.json ./dist",
+    "typeorm": "typeorm-ts-node-commonjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0",
+    "get-port": "^7.1.0",
+    "http-proxy-middleware": "^3.0.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

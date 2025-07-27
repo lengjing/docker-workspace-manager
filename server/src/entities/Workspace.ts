@@ -23,12 +23,15 @@ export class Workspace {
   // @Column()
   // volumeMountPath: string;
 
-  // @Column()
-  // sshPort: number;
+  @Column()
+  sshPort: number;
 
-  // @Column()
-  // dockerContainerId: string;
+  @Column()
+  dockerContainerId: string;
 
-  // @Column()
-  // status: string;
+  @Column()
+  status: string;
+
+  @Column()
+  sideCarContainerId: string;
 }

@@ -1,12 +1,13 @@
-import Docker from "dockerode";
-const docker = new Docker();
+import Dockerode from "dockerode";
 
-export async function getRandomPort(): Promise<number> {
+const docker = new Dockerode({ socketPath: '/var/run/docker.sock' });
+
+const getRandomPort = () => {
   // 简单模拟分配
   return Math.floor(22000 + Math.random() * 1000);
 }
 
-export const createContainer = async ({
+const createContainer = async ({
   name,
   image,
   volumeMountPath,
@@ -42,4 +43,13 @@ export const createContainer = async ({
   return container.id;
 }
 
-export const listContainers = docker.listContainers
+const listContainers = docker.listContainers
+
+const listImages = docker.listImages
+
+export default {
+  listImages,
+  listContainers,
+  createContainer,
+  getRandomPort
+}

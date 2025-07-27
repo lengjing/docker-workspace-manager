@@ -24,16 +24,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <a href="#" className="hover:text-primary">Settings</a> */}
             <a href="/workspace" className="hover:text-primary">工作台</a>
             <a href="/storage" className="hover:text-primary">存储</a>
+            <a href="/training" className="hover:text-primary">训练</a>
           </nav>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-sm font-medium">James</div>
+            <div className="text-sm font-medium">Admin</div>
             <div className="text-xs text-muted-foreground">Administrator</div>
           </div>
           <Avatar className="h-8 w-8">
             <AvatarImage src="https://i.pravatar.cc/40?img=1" alt="James" />
-            <AvatarFallback>J</AvatarFallback>
+            <AvatarFallback>A</AvatarFallback>
           </Avatar>
         </div>
       </header>

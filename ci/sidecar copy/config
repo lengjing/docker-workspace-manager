@@ -1,11 +1,13 @@
 PermitRootLogin yes
 PasswordAuthentication yes
+AllowTcpForwarding yes
 ChallengeResponseAuthentication no
 UsePAM yes
 X11Forwarding yes
 PrintMotd no
 AcceptEnv LANG LC_*
 Subsystem sftp /usr/lib/openssh/sftp-server
+ForceCommand /opt/enter.sh
 
 Port 22001
 Port 22002
