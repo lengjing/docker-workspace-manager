@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y \
 
 RUN echo 'root:root' | chpasswd
 
-RUN curl -L https://github.com/coder/code-server/releases/download/v4.102.2/code-server-4.102.2-linux-amd64.tar.gz -o code-server.tar.gz && \
-    tar -xvzf code-server.tar.gz && \
-    rm code-server.tar.gz
+RUN curl -L https://github.com/coder/code-server/releases/download/v4.102.2/code-server-4.102.2-linux-amd64.tar.gz -o /tools/code-server.tar.gz && \
+    tar -xvzf /tools/code-server.tar.gz && \
+    rm /tools/code-server.tar.gz
     
-RUN ln -sf /code-server-4.102.2-linux-amd64/bin/code-server /usr/bin/code-server
+RUN ln -sf /tools/code-server-4.102.2-linux-amd64/bin/code-server /usr/bin/code-server
 
 COPY sshd_config /etc/ssh/sshd_config
 COPY start.sh .

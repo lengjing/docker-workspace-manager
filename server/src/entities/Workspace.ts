@@ -27,11 +27,11 @@ export class Workspace {
   sshPort: number;
 
   @Column()
-  dockerContainerId: string;
+  containerId: string;
 
   @Column()
   status: string;
 
-  @Column()
-  sideCarContainerId: string;
+  // @Column()
+  // sideCarContainerId: string;
 }

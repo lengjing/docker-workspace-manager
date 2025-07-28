@@ -15,44 +15,6 @@ app.use(express.urlencoded({ extended: false }))
 // 保存容器ID与代理目标的映射
 const containerRoutes: Record<string, string> = {};
 
-// 中间件：动态代理 Jupyter 服务
-app.use('/jupyter/:containerId/', async (req: Request, res: Response, next: NextFunction) => {
-  const containerId = req.params.containerId;
-
-  // 已缓存，直接代理
-  if (containerRoutes[containerId]) {
-    return createProxyMiddleware({
-      target: containerRoutes[containerId],
-      pathRewrite: { [`^/jupyter/${containerId}`]: '' },
-      changeOrigin: true,
-      ws: true,
-    })(req, res, next);
-  }
-
-  // try {
-  //   const container = docker.getContainer(containerId);
-  //   const data = await container.inspect();
-
-  //   const ip = data?.NetworkSettings?.IPAddress;
-  //   const port = 8888;
-
-  //   if (!ip) throw new Error('容器未分配 IP 地址');
-  //   const target = `http://${ip}:${port}`;
-  //   containerRoutes[containerId] = target;
-
-  //   console.log(`Proxy created: /jupyter/${containerId}/ → ${target}`);
-
-  //   return createProxyMiddleware({
-  //     target,
-  //     pathRewrite: { [`^/jupyter/${containerId}`]: '' },
-  //     changeOrigin: true,
-  //     ws: true,
-  //   })(req, res, next);
-  // } catch (err) {
-  //   res.status(500).send(`容器 ${containerId} 不存在或未启动: ${(err as Error).message}`);
-  // }
-});
-
 app.get('/workspaces', async (req, res) => {
   const containers = await docker.listContainers({
     "all": true,
@@ -67,7 +29,6 @@ app.get('/workspaces/:id', async (req, res) => {
 })
 
 app.post('/workspaces', async (req, res) => {
-  console.log(req.body)
   const container = await docker.createContainer({
     Image: 'busybox:latest',
     name: req.body?.name,
@@ -75,31 +36,42 @@ app.post('/workspaces', async (req, res) => {
     OpenStdin: true, // -i
     Cmd: ['sh'], // 默认命令
   });
-  await container.start(); // -d (后台运行)
 
-  container
-
-  // const sshPort = await getPort({ port: 22000 })
-  // const coderPort = await getPort({ port: 22000 })
-
-  // await docker.createContainer({
-  //   "Image": "sidecar",
-  //   "ExposedPorts": {
-  //     [sshPort]: 22,
-  //     [coderPort]: 8888
-  //   }
-  // })
-
-  // await AppDataSource.getRepository(Workspace).save({
-  //   name: '',
-  //   sshPort: sshPort,
-  // })
+  await AppDataSource.getRepository(Workspace).save({
+    name: req.body?.name,
+    containerId: container.id,
+    sshPort: await getPort({ port: 3000 }),
+    status: (await container.inspect()).State.Status,
+  });
 
   res.json({ done: true })
 })
 
 app.post('/workspaces/:id/start', async (req, res) => {
   await docker.getContainer(req.params.id)?.start()
+
+  docker.getContainer(req.params.id)?.exec({
+    Cmd: ['sh', '-c', '/tools/code-server/bin/code-server'],
+    AttachStdout: true,
+    AttachStderr: true,
+  }, (err, exec) => {
+    if (err) {
+      console.error('Exec error:', err);
+      return res.status(500).json({ error: 'Failed to start workspace' });
+    }
+    exec.start({ Detach: false, Tty: true }, (err, stream) => {
+      if (err) {
+        console.error('Exec start error:', err);
+        return res.status(500).json({ error: 'Failed to start workspace' });
+      }
+      stream.on('data', (data) => {
+        console.log('Exec output:', data.toString());
+      });
+      stream.on('end', () => {
+        console.log('Exec completed');
+      });
+    });
+  });
   res.json({ done: true })
 })
 
@@ -116,13 +88,6 @@ app.post('/workspaces/:id/stop', async (req, res) => {
 app.post('/workspaces/:id/remove', async (req, res) => {
   await docker.getContainer(req.params.id)?.remove()
   res.json({ done: true })
-})
-
-app.get('/workspaces/:id/jupyter', () => {
-  // get container
-  // exec container
-  // install jupyter
-  // run jupyter
 })
 
 app.get('/images', async (req, res) => {
