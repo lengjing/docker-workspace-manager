@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --watch src/** --ext ts,json --ignore src/**/*.spec.ts --exec ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "start": "ts-node src/index.ts",
     "build": "rm -rf dist && tsc && cp package.json ./dist",
     "typeorm": "typeorm-ts-node-commonjs"
@@ -14,7 +14,7 @@
   "description": "",
   "dependencies": {
     "express": "^5.1.0",
-    "get-port": "^7.1.0",
+    "get-port": "^5.1.1",
     "http-proxy-middleware": "^3.0.5"
   },
   "devDependencies": {

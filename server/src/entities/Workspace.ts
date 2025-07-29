@@ -1,10 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
 
 @Entity()
 export class Workspace {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column()
   name: string;
 
@@ -25,6 +26,9 @@ export class Workspace {
 
   @Column()
   sshPort: number;
+
+  @Column()
+  codeServerPort: number;
 
   @Column()
   containerId: string;

@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
         destination: 'http://127.0.0.1:4000/:path*', // 实际代理到外部接口
       },
       {
-        source: '/workspaces/:id/vscode',
-        destination: 'http://127.0.0.1:4000/workspaces/:id/vscode',
+        source: '/vscode/:name/:path*',
+        destination: 'http://127.0.0.1:4000/vscode/:name/:path*',
       }
     ];
   },

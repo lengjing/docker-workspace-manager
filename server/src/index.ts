@@ -1,64 +1,30 @@
-import express, { Request, Response, NextFunction } from 'express';
+import Dockerode from 'dockerode';
+import express from 'express';
+import getPort from 'get-port';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import path from 'path';
 import { AppDataSource, initializeDataSource } from './data-source';
 import { Workspace } from './entities/Workspace';
-import Dockerode from 'dockerode';
-import getPort from 'get-port';
-import path from 'path';
 
 const docker = new Dockerode({
   // host: '/var/run/docker.sock'
 });
 const app = express();
 const port = 4000;
+const startSshPort = 22000;
+const startCodeServerPort = 8080;
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 initializeDataSource()
 
-const network = 'bridge'; // 默认网络
+app.use('/vscode/:name/:any', async (req, res, next) => {
+  const ws = await AppDataSource.getRepository(Workspace).findOneBy({ name: req.params.name })
 
-const volumeName = 'dwm-shared-data'; // 共享卷名称
-
-async function setupSharedVolume() {
-  // 创建 Docker 卷
-  const volumes = await docker.listVolumes();
-  const volumeExists = volumes.Volumes.some(v => v.Name === volumeName);
-  if (volumeExists) {
-    console.log('Volume "shared-data" already exists.');
-    return;
-  }
-  const volume = await docker.createVolume({
-    Name: volumeName
-  });
-
-  // 在容器 A 中，挂载 volume 到 /mnt/shared
-  const containerA = await docker.createContainer({
-    Image: 'alpine',
-    Cmd: ['sh', '-c', 'echo "Hello from A" > /mnt/shared/hello.txt && sleep 300'],
-    HostConfig: {
-      Mounts: [
-        {
-          Type: 'volume',
-          Source: volumeName,
-          Target: '/mnt/shared',
-        }
-      ]
-    }
-  });
-
-  await containerA.start();
-  console.log('Container A started.');
-}
-
-app.use('/workspaces/:name/vscode', (req, res, next) => {
   return createProxyMiddleware({
-    target: `http://${req.params.name}:8080`,
+    target: `http://127.0.0.1:${ws?.codeServerPort}`,
     changeOrigin: true,
-    // pathRewrite: {
-    //   '^\s\S*$': '', // 重写路径
-    // },
   })(req, res, next);
 });
 
@@ -74,31 +40,61 @@ app.get('/workspaces/:id', async (req, res) => {
   res.json(workspace)
 })
 
+const getPorts = async () => {
+  const usedPorts = await AppDataSource.getRepository(Workspace).find({ select: ['sshPort', 'codeServerPort'] });
+  const usedSshPorts = usedPorts.map(v => v.sshPort)
+  const usedCodeServerPorts = usedPorts.map(v => v.codeServerPort)
+
+  let sshPort: number;
+  let codeServerPort: number
+
+  while (true) {
+    sshPort = await getPort({ port: startSshPort });
+    if (!usedSshPorts.includes(sshPort)) break;
+  }
+
+  while (true) {
+    codeServerPort = await getPort({ port: startCodeServerPort });
+    if (!usedCodeServerPorts.includes(codeServerPort)) break;
+  }
+
+  return { sshPort, codeServerPort }
+}
+
+
 app.post('/workspaces', async (req, res) => {
   const { image, name } = req.body;
-  console.log(path.resolve('./tools'))
+
+  const { sshPort, codeServerPort } = await getPorts()
+
   const container = await docker.createContainer({
     Image: image,
     name: name,
     Tty: true, // -t
     OpenStdin: true, // -i
-    // Cmd: ['sh'], // 默认命令
+    Cmd: ['sh', '-c', `CS_BASE_URL=/vscode/${name}/ \
+      /tools/code-server-4.102.2-linux-amd64/bin/code-server --auth none --bind-addr 0.0.0.0:8080 --disable-telemetry`],
+    AttachStdout: true,
+    AttachStderr: true,
     HostConfig: {
       Binds: [`${path.resolve('./tools')}:/tools`],
-    },
-    NetworkingConfig: {
-      EndpointsConfig: {
-        [network]: {
-          // Aliases: [name],
-        },
-      },
-    },
+      PortBindings: { '8080/tcp': [{ HostPort: `${codeServerPort}` }] },
+      // 等同于 `--gpus all`
+      DeviceRequests: [
+        {
+          Driver: 'nvidia',
+          Count: -1, // -1 表示 all
+          Capabilities: [['gpu']],
+        }
+      ]
+    }
   });
 
   await AppDataSource.getRepository(Workspace).save({
     name,
     containerId: container.id,
-    sshPort: await getPort({ port: 22000 }),
+    sshPort,
+    codeServerPort,
     status: (await container.inspect()).State.Status,
   });
 
@@ -111,33 +107,34 @@ app.post('/workspaces/:id/start', async (req, res) => {
     return res.status(404).json({ error: 'Workspace not found' });
   }
 
-  await docker.getContainer(workspace.containerId)?.start()
+  const container = docker.getContainer(workspace.containerId);
+
+  await container.start()
   await AppDataSource.getRepository(Workspace).update(workspace, {
-    status: (await docker.getContainer(workspace.containerId)?.inspect()).State.Status,
+    status: (await container.inspect()).State.Status,
   })
 
-  docker.getContainer(workspace.containerId)?.exec({
-    Cmd: ['sh', '-c', `/tools/code-server-4.102.2-linux-amd64/bin/code-server --auth none --bind-addr 0.0.0.0:8080 --base-path /workspaces/${workspace.name}/vscode --disable-telemetry`],
-    AttachStdout: true,
-    AttachStderr: true,
-  }, (err, exec) => {
-    if (err) {
-      console.error('Exec error:', err);
-      return res.status(500).json({ error: 'Failed to start workspace' });
-    }
-    exec.start({ Detach: false, Tty: true }, (err, stream) => {
-      if (err) {
-        console.error('Exec start error:', err);
-        return res.status(500).json({ error: 'Failed to start workspace' });
-      }
-      stream.on('data', (data) => {
-        console.log('Exec output:', data.toString());
-      });
-      stream.on('end', () => {
-        console.log('Exec completed');
-      });
-    });
-  });
+  // container.exec({
+  //   AttachStdout: true,
+  //   AttachStderr: true,
+  // }, (err, exec) => {
+  //   if (err) {
+  //     console.error('Exec error:', err);
+  //     return res.status(500).json({ error: 'Failed to start workspace' });
+  //   }
+  //   exec.start({ Detach: false, Tty: true }, (err, stream) => {
+  //     if (err) {
+  //       console.error('Exec start error:', err);
+  //       return res.status(500).json({ error: 'Failed to start workspace' });
+  //     }
+  //     stream.on('data', (data) => {
+  //       console.log('Exec output:', data.toString());
+  //     });
+  //     stream.on('end', () => {
+  //       console.log('Exec completed');
+  //     });
+  //   });
+  // });
   res.json({ done: true })
 })
 

@@ -1,20 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
 type Workspace = {
   id: number;
@@ -25,6 +24,7 @@ type Workspace = {
   storage: string;
   volumeMountPath: string;
   sshPort: number;
+  codeServerPort: number;
   status: string;
   containerId: string;
 };
@@ -123,7 +123,7 @@ export default function WorkspacePage() {
               <TableHead>卷路径</TableHead>
               <TableHead>SSH端口</TableHead>
               <TableHead>状态</TableHead>
-              <TableHead>操作</TableHead>
+              <TableHead className="w-64 sticky right-0 bg-white z-10">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -136,7 +136,7 @@ export default function WorkspacePage() {
                 <TableCell>{ws.volumeMountPath}</TableCell>
                 <TableCell>{ws.sshPort}</TableCell>
                 <TableCell>{ws.status}</TableCell>
-                <TableCell>
+                <TableCell className="sticky right-0 bg-white z-10">
                   <div className="flex space-x-2">
                     {ws.status === 'created' ? (
                       <>
@@ -147,7 +147,8 @@ export default function WorkspacePage() {
                       <>
                         <Button size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/stop`, { method: 'post' }).then(reloadWorkspaces)}>停止</Button>
                         <Button variant="outline" size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/restart`, { method: 'post' }).then(reloadWorkspaces)}>重启</Button>
-                        <Button variant="outline" size="sm" onClick={() => { window.open(`/workspaces/${ws.name}/vscode`, "_blank") }}>vscode</Button>
+                        {/* <Button variant="outline" size="sm" onClick={() => { window.open(`/vscode/${ws.name}/vscode`, "_blank") }}>vscode</Button> */}
+                        <Button variant="outline" size="sm" onClick={() => { window.open(`//${window.location.hostname}:${ws.codeServerPort}`, "_blank") }}>code server</Button>
                       </>
                     ) : ws.status === 'exited' ? (
                       <>
