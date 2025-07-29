@@ -22,9 +22,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <a href="#" className="hover:text-primary">Users</a>
             <a href="#" className="hover:text-primary">Audit Log</a>
             <a href="#" className="hover:text-primary">Settings</a> */}
-            <a href="/workspace" className="hover:text-primary">工作台</a>
-            <a href="/storage" className="hover:text-primary">存储</a>
-            <a href="/training" className="hover:text-primary">训练</a>
+            <a href="/workspaces" className="hover:text-primary">工作台</a>
+            <a href="/storages" className="hover:text-primary">存储</a>
+            <a href="/trainings" className="hover:text-primary">训练</a>
           </nav>
         </div>
         <div className="flex items-center gap-3">

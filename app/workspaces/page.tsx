@@ -6,6 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type Workspace = {
   id: number;
@@ -17,25 +26,50 @@ type Workspace = {
   volumeMountPath: string;
   sshPort: number;
   status: string;
+  containerId: string;
+};
+
+type Image = {
+  name: string;
+  tag: string;
 };
 
 export default function WorkspacePage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [images, setImages] = useState<any[]>([]);
   const [form, setForm] = useState<any>({});
   const [open, setOpen] = useState(false);
 
+  const reloadWorkspaces = () => {
+    fetch("/api/workspaces")
+      .then(res => res.json())
+      .then(data => setWorkspaces(data));
+  };
+
+  const fetchImages = () => {
+    fetch("/api/images")
+      .then(res => res.json())
+      .then(data => setImages(data));
+  };
+
   useEffect(() => {
-    fetch("/api/workspace").then(res => res.json()).then(setWorkspaces);
+    reloadWorkspaces();
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      fetchImages()
+    }
+  }, [open]);
+
   const handleSubmit = async () => {
-    await fetch("/api/workspace", {
+    await fetch("/api/workspaces", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     setOpen(false);
-    fetch("/api/workspace").then(res => res.json()).then(setWorkspaces);
+    reloadWorkspaces();
   };
 
   return (
@@ -51,12 +85,27 @@ export default function WorkspacePage() {
               <DialogTitle>新建工作台</DialogTitle>
             </DialogHeader>
             <div className="space-y-2">
+              <Select onValueChange={(value) => setForm({ ...form, image: value })}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择镜像" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {/* <SelectLabel></SelectLabel> */}
+                    {images.map((image) => (
+                      <SelectItem key={image.Id} value={image.Id}>
+                        {image.RepoTags[0]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <Input placeholder="名称" onChange={e => setForm({ ...form, name: e.target.value })} />
               <Input placeholder="CPU" onChange={e => setForm({ ...form, cpu: e.target.value })} />
               <Input placeholder="GPU" onChange={e => setForm({ ...form, gpu: e.target.value })} />
               <Input placeholder="内存" onChange={e => setForm({ ...form, memory: e.target.value })} />
               <Input placeholder="存储大小" onChange={e => setForm({ ...form, storage: e.target.value })} />
-              <Input placeholder="卷路径（已在存储里创建好）" onChange={e => setForm({ ...form, volumeMountPath: e.target.value })} />
+              <Input placeholder="卷路径" onChange={e => setForm({ ...form, volumeMountPath: e.target.value })} />
               <Button onClick={handleSubmit}>创建</Button>
             </div>
           </DialogContent>
@@ -87,7 +136,27 @@ export default function WorkspacePage() {
                 <TableCell>{ws.volumeMountPath}</TableCell>
                 <TableCell>{ws.sshPort}</TableCell>
                 <TableCell>{ws.status}</TableCell>
-                <TableCell>{}</TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    {ws.status === 'created' ? (
+                      <>
+                        <Button size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/start`, { method: 'post' }).then(reloadWorkspaces)}>启动</Button>
+                        <Button variant="destructive" size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/remove`, { method: 'post' }).then(reloadWorkspaces)}>删除</Button>
+                      </>
+                    ) : ws.status === 'running' ? (
+                      <>
+                        <Button size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/stop`, { method: 'post' }).then(reloadWorkspaces)}>停止</Button>
+                        <Button variant="outline" size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/restart`, { method: 'post' }).then(reloadWorkspaces)}>重启</Button>
+                        <Button variant="outline" size="sm" onClick={() => { window.open(`/workspaces/${ws.name}/vscode`, "_blank") }}>vscode</Button>
+                      </>
+                    ) : ws.status === 'exited' ? (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/start`, { method: 'post' }).then(reloadWorkspaces)}>启动</Button>
+                        <Button variant="destructive" size="sm" onClick={() => fetch(`/api/workspaces/${ws.id}/remove`, { method: 'post' }).then(reloadWorkspaces)}>删除</Button>
+                      </>
+                    ) : null}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
