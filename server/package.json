@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec ts-node src/index.ts",
-    "start": "ts-node src/index.ts",
+    "start": "node dist/index.js",
     "build": "rm -rf dist && tsc && cp package.json ./dist",
     "typeorm": "typeorm-ts-node-commonjs"
   },
@@ -15,7 +15,9 @@
   "dependencies": {
     "express": "^5.1.0",
     "get-port": "^5.1.1",
-    "http-proxy-middleware": "^3.0.5"
+    "http-proxy-middleware": "^3.0.5",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",

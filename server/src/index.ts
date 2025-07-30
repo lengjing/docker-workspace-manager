@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import Dockerode from 'dockerode';
 import express from 'express';
 import getPort from 'get-port';
@@ -86,8 +87,12 @@ app.post('/workspaces', async (req, res) => {
           Count: -1, // -1 表示 all
           Capabilities: [['gpu']],
         }
-      ]
-    }
+      ],
+    },
+    ExposedPorts: {
+      '8080/tcp': {},
+      '22/tcp': {},
+    },
   });
 
   await AppDataSource.getRepository(Workspace).save({
