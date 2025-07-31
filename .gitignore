@@ -14,8 +14,8 @@ node_modules/
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
 /build
@@ -44,4 +44,4 @@ next-env.d.ts
 *.db
 
 dist/
-server/tools
+*.tar.gz
