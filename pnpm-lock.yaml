@@ -8,10 +8,11 @@ importers:
 
   .: {}
 
-  packages/cli: {}
-
-  packages/server:
+  packages/api-server:
     dependencies:
+      dockerode:
+        specifier: ^4.0.7
+        version: 4.0.7
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -27,7 +28,13 @@ importers:
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
+      typeorm:
+        specifier: ^0.3.25
+        version: 0.3.25(reflect-metadata@0.2.2)(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3))
     devDependencies:
+      '@types/dockerode':
+        specifier: ^3.3.42
+        version: 3.3.42
       '@types/express':
         specifier: ^5.0.3
         version: 5.0.3
@@ -40,6 +47,8 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+
+  packages/cli: {}
 
   packages/web:
     dependencies:
@@ -70,9 +79,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      dockerode:
-        specifier: ^4.0.7
-        version: 4.0.7
       lucide-react:
         specifier: ^0.525.0
         version: 0.525.0(react@19.1.1)
@@ -91,9 +97,6 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
-      typeorm:
-        specifier: ^0.3.25
-        version: 0.3.25(reflect-metadata@0.2.2)(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3))
       zod:
         specifier: ^4.0.5
         version: 4.0.14
@@ -101,9 +104,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.11
-      '@types/dockerode':
-        specifier: ^3.3.42
-        version: 3.3.42
       '@types/node':
         specifier: ^20
         version: 20.19.9

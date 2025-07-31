@@ -43,5 +43,10 @@ next-env.d.ts
 .vscode/
 *.db
 
+target/
 dist/
 *.tar.gz
+
+# Added by cargo
+
+/target

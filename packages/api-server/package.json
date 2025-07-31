@@ -13,13 +13,16 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dockerode": "^4.0.7",
     "express": "^5.1.0",
     "get-port": "^5.1.1",
     "http-proxy-middleware": "^3.0.5",
     "reflect-metadata": "^0.2.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.25"
   },
   "devDependencies": {
+    "@types/dockerode": "^3.3.42",
     "@types/express": "^5.0.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
