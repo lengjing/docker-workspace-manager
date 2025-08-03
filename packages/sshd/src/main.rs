@@ -51,25 +51,38 @@ impl server::Handler for SimpleHandler {
         Ok(())
     }
 
-    // 处理 shell 请求
+    // 处理 shell 请求（交互式 shell）
     async fn shell_request(&mut self, channel: ChannelId, session: &mut Session) -> Result<(), Self::Error> {
         println!("Shell requested on channel: {:?}", channel);
 
         let mut channel = session.channel(channel).await.unwrap();
-        channel.data(b"Welcome to the simple SSH server shell!\n").await?;
-        channel.eof().await?;
-        channel.close().await?;
+
+        // 请求 PTY（伪终端）以支持交互式 shell
+        session.request_pty(
+            channel.id(),
+            Pty {
+                term: "xterm".to_string(),
+                col_width: 80,
+                row_height: 24,
+                pix_width: 0,
+                pix_height: 0,
+                modes: vec![],
+            },
+        ).await?;
+
+        // 启动交互式 shell（使用 /bin/bash 或系统默认 shell）
+        session.shell_request(channel.id()).await?;
 
         Ok(())
     }
 
-    // 处理 SFTP 请求
+    // 处理 SFTP 请求（真实文件系统）
     async fn sftp_request(&mut self, channel: ChannelId, session: &mut Session) -> Result<(), Self::Error> {
         println!("SFTP requested on channel: {:?}", channel);
 
-        // 创建 SFTP 会话（使用内存文件系统）
-        let sftp = SftpSession::default();
-        session.request_subsystem(true, channel, b"sftp", Some(sftp)).await?;
+        // 创建 SFTP 会话，基于当前工作目录
+        let sftp = SftpSession::new(std::env::current_dir()?)?;
+        session.request_subsystem(true, channel, b"sftp", Some(SftpSubsystem::new(sftp))).await?;
 
         Ok(())
     }
