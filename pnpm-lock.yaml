@@ -50,6 +50,12 @@ importers:
 
   packages/cli: {}
 
+  packages/ssh-server-node:
+    dependencies:
+      ssh2:
+        specifier: ^1.16.0
+        version: 1.16.0
+
   packages/web:
     dependencies:
       '@hookform/resolvers':
