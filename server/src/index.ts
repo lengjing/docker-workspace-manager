@@ -73,8 +73,16 @@ app.post('/workspaces', async (req, res) => {
     name: name,
     Tty: true, // -t
     OpenStdin: true, // -i
-    Cmd: ['sh', '-c', `CS_BASE_URL=/vscode/${name}/ \
-      /tools/code-server-4.102.2-linux-amd64/bin/code-server --auth none --bind-addr 0.0.0.0:8080 --disable-telemetry`],
+    Cmd: [
+      "/tools/code-server-4.102.2-linux-amd64/bin/code-server",
+      "--auth", "none",
+      "--bind-addr", "0.0.0.0:8080",
+      "--disable-telemetry"
+    ],
+    Env: [
+      "CS_BASE_URL=/vscode/" + name
+    ],
+    Entrypoint: '', // clear default entrypoint
     AttachStdout: true,
     AttachStderr: true,
     HostConfig: {
