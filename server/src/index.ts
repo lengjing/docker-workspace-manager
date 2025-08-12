@@ -88,6 +88,7 @@ app.post('/workspaces', async (req, res) => {
           Capabilities: [['gpu']],
         }
       ],
+      Privileged: true
     },
     ExposedPorts: {
       '8080/tcp': {},
