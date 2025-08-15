@@ -2,10 +2,18 @@ import 'reflect-metadata';
 import Dockerode from 'dockerode';
 import express from 'express';
 import getPort from 'get-port';
+import http from 'http';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import * as pty from 'node-pty';
 import path from 'path';
+import { WebSocketServer } from 'ws';
 import { AppDataSource, initializeDataSource } from './data-source';
 import { Workspace } from './entities/Workspace';
+import contextUser from './middleware/contextUser';
+import auth from './middleware/auth';
+import { User } from './entities/User';
+import jwt from "jsonwebtoken";
+import config from './config';
 
 const docker = new Dockerode({
   // host: '/var/run/docker.sock'
@@ -14,11 +22,38 @@ const app = express();
 const port = 4000;
 const startSshPort = 22000;
 const startCodeServerPort = 8080;
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
+app.use(contextUser())
 
 initializeDataSource()
+
+wss.on('connection', (ws) => {
+  console.log('Client connected');
+
+  // 启动 nvitop 进程（伪终端模式）
+  const shell = pty.spawn('nvitop', [], {
+    name: 'xterm-256color',
+    cols: 220,
+    rows: 120,
+    cwd: process.env.HOME,
+    env: { ...process.env, TERM: 'xterm-256color' },
+  });
+
+  // nvitop -> 前端
+  shell.onData(data => ws.send(data));
+
+  // 前端 -> nvitop
+  ws.on('message', (msg) => shell.write(msg.toString()));
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+    shell.kill();
+  });
+});
 
 app.use('/vscode/:name/:any', async (req, res, next) => {
   const ws = await AppDataSource.getRepository(Workspace).findOneBy({ name: req.params.name })
@@ -29,8 +64,10 @@ app.use('/vscode/:name/:any', async (req, res, next) => {
   })(req, res, next);
 });
 
-app.get('/workspaces', async (req, res) => {
-  const workspaces = await AppDataSource.getRepository(Workspace).find()
+app.get('/workspaces', auth.needLogin(), async (req, res) => {
+  const workspaces = await AppDataSource.getRepository(Workspace).findBy({
+    user: { id: req.user.id }
+  });
 
   res.json(workspaces)
 })
@@ -61,7 +98,6 @@ const getPorts = async () => {
 
   return { sshPort, codeServerPort }
 }
-
 
 app.post('/workspaces', async (req, res) => {
   const { image, name } = req.body;
@@ -189,7 +225,21 @@ app.get('/images', async (req, res) => {
   res.json(images)
 })
 
+app.post('/login', async (req, res) => {
+  const { username } = req.body;
+
+  const user = await AppDataSource.getRepository(User).findOneBy({ username });
+
+  if (user) {
+
+    const token = jwt.sign({ id: user.id, username: user.username }, config.jwt.secret, { expiresIn: "30d" });
+    res.json({ user, token })
+  } else {
+    res.status(404).send('invalid username')
+  }
+})
+
 // 启动服务
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Proxy server running at http://localhost:${port}`);
 });

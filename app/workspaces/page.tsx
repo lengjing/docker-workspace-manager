@@ -8,16 +8,20 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEffect, useState } from "react";
+import { groupBy } from 'lodash'
+import request from "@/lib/request";
 
 type Workspace = {
   id: number;
   name: string;
+  image: string;
   cpu: string;
   gpu: string;
   memory: string;
@@ -29,26 +33,21 @@ type Workspace = {
   containerId: string;
 };
 
-type Image = {
-  name: string;
-  tag: string;
-};
-
 export default function WorkspacePage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [images, setImages] = useState<any[]>([]);
   const [form, setForm] = useState<any>({});
   const [open, setOpen] = useState(false);
 
+  const groupedImages = groupBy(images, img => img.RepoTags[0]?.split(':')[0])
+
   const reloadWorkspaces = () => {
-    fetch("/api/workspaces")
-      .then(res => res.json())
+    request("/api/workspaces")
       .then(data => setWorkspaces(data));
   };
 
   const fetchImages = () => {
-    fetch("/api/images")
-      .then(res => res.json())
+    request("/api/images")
       .then(data => setImages(data));
   };
 
@@ -63,9 +62,8 @@ export default function WorkspacePage() {
   }, [open]);
 
   const handleSubmit = async () => {
-    await fetch("/api/workspaces", {
+    await request("/api/workspaces", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
     });
     setOpen(false);
@@ -80,7 +78,7 @@ export default function WorkspacePage() {
           <DialogTrigger asChild>
             <Button variant="outline">创建工作台</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent style={{ width: 640 }}>
             <DialogHeader>
               <DialogTitle>新建工作台</DialogTitle>
             </DialogHeader>
@@ -90,14 +88,18 @@ export default function WorkspacePage() {
                   <SelectValue placeholder="选择镜像" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectGroup>
-                    {/* <SelectLabel></SelectLabel> */}
-                    {images.map((image) => (
-                      <SelectItem key={image.Id} value={image.Id}>
-                        {image.RepoTags[0]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
+                  {Object.keys(groupedImages).map(g => {
+                    return (
+                      <SelectGroup key={g}>
+                        <SelectLabel>{g}</SelectLabel>
+                        {groupedImages[g].map((image) => (
+                          <SelectItem key={image.Id} value={image.Id}>
+                            {image.RepoTags[0]}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )
+                  })}
                 </SelectContent>
               </Select>
               <Input placeholder="名称" onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -117,6 +119,7 @@ export default function WorkspacePage() {
           <TableHeader>
             <TableRow>
               <TableHead>名称</TableHead>
+              <TableHead>镜像</TableHead>
               <TableHead>CPU</TableHead>
               <TableHead>GPU</TableHead>
               <TableHead>内存</TableHead>
@@ -130,6 +133,7 @@ export default function WorkspacePage() {
             {workspaces.map(ws => (
               <TableRow key={ws.id}>
                 <TableCell>{ws.name}</TableCell>
+                <TableCell>{ws.image}</TableCell>
                 <TableCell>{ws.cpu}</TableCell>
                 <TableCell>{ws.gpu}</TableCell>
                 <TableCell>{ws.memory}</TableCell>

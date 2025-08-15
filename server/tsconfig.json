@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["ESNext"],
-    "target": "ES2019",
+    "target": "es2021",
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "./dist",

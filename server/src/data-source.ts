@@ -2,13 +2,15 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { Workspace } from "./entities/Workspace";
 import { Storage } from "./entities/Storage";
+import { User } from "./entities/User";
 
 export const AppDataSource = new DataSource({
   type: "sqlite",
   database: "./dwm.db",
-  synchronize: true,
+  synchronize: false,
   logging: false,
-  entities: [Workspace, Storage],
+  entities: [Workspace, Storage, User],
+  migrations: ["src/migrations/*.ts"],
 });
 
 export const initializeDataSource = async () => {

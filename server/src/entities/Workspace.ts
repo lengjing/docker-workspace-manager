@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
+import { User } from "./User";
 
 @Entity()
 export class Workspace {
@@ -6,8 +7,11 @@ export class Workspace {
   id: number;
 
   @Index()
-  @Column()
+  @Column("varchar")
   name: string;
+
+  @Column("varchar", { nullable: true })
+  image: string
 
   // @Column()
   // cpu: string;
@@ -36,6 +40,10 @@ export class Workspace {
   @Column()
   status: string;
 
-  // @Column()
-  // sideCarContainerId: string;
+  @ManyToOne(() => User, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: "userId" })
+  user: User
+
+  @CreateDateColumn()
+  createdAt: Date
 }
