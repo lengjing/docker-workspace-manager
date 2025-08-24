@@ -1,0 +1,25 @@
+# Configuration file example (config.toml)
+# Save this as /etc/rust-sshd/config.toml
+
+bind_address = "0.0.0.0"
+port = 2222
+host_key_path = "/etc/rust-sshd/host_key"
+authorized_keys_dir = "/etc/rust-sshd/authorized_keys"
+shell = "/bin/bash"
+max_connections = 100
+connection_timeout = 300
+sftp_enabled = true
+
+[authentication]
+password_auth = true
+pubkey_auth = true
+keyboard_interactive = false
+
+# Additional Cargo.toml dependencies for more advanced features
+# Add these if you need SFTP support or more security features:
+#
+# [dependencies.additional]
+# libc = "0.2"              # For Unix system calls (SIGWINCH)
+# pam = "0.7"               # For PAM authentication
+# ldap3 = "0.11"            # For LDAP authentication
+# sqlx = "0.7"              # For database authentication
